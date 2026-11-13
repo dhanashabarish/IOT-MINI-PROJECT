@@ -1,0 +1,91 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+const int TRIG_PIN = 7;
+const int ECHO_PIN = 8;
+const int BUZZER_PIN = 6;
+
+const int POTHOLE_DISTANCE = 30;
+
+void setup()
+{
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  digitalWrite(BUZZER_PIN, LOW);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print("POTHOLE ALERT");
+
+  lcd.setCursor(0, 1);
+  lcd.print("SYSTEM READY");
+
+  delay(2000);
+  lcd.clear();
+}
+
+void loop()
+{
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  if (duration == 0)
+  {
+    digitalWrite(BUZZER_PIN, LOW);
+
+    lcd.clear();
+
+    lcd.setCursor(0, 0);
+    lcd.print("SENSOR ERROR");
+
+    lcd.setCursor(0, 1);
+    lcd.print("CHECK HC-SR04");
+
+    delay(500);
+    return;
+  }
+
+  float distance = duration * 0.0343 / 2;
+
+  lcd.clear();
+
+  if (distance <= POTHOLE_DISTANCE)
+  {
+    digitalWrite(BUZZER_PIN, HIGH);
+
+    lcd.setCursor(0, 0);
+    lcd.print("POTHOLE");
+
+    lcd.setCursor(0, 1);
+    lcd.print("DETECTED!");
+    lcd.print("go safe");
+  }
+  else
+  {
+    digitalWrite(BUZZER_PIN, LOW);
+
+    lcd.setCursor(0, 0);
+    lcd.print("ROAD SAFE");
+
+    lcd.setCursor(0, 1);
+    lcd.print("DIST:");
+    lcd.print(distance, 1);
+    lcd.print("cm");
+  }
+
+  delay(500);
+}
